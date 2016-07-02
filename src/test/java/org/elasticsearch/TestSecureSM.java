@@ -46,7 +46,16 @@ public class TestSecureSM extends TestCase {
         return true;
       }
     });
-    System.setSecurityManager(new SecureSM(true));
+    System.setSecurityManager(new SecureSM(new String[]{
+            // surefire test runner
+            "org.apache.maven.surefire.booter.",
+            // junit4 test runner
+            "com.carrotsearch.ant.tasks.junit4.",
+            // eclipse test runner
+            "org.eclipse.jdt.internal.junit.runner.",
+            // intellij test runner
+            "com.intellij.rt.execution.junit."
+    }));
   }
   
   @Test

@@ -39,8 +39,8 @@ import java.util.Objects;
  *       a thread must have {@code modifyThread} to even terminate its own pool, leaving
  *       system threads unprotected.
  * </ul>
- * This class throws exception on {@code exitVM} calls, and provides a testing mode
- * where calls from test runners are allowed.
+ * This class throws exception on {@code exitVM} calls, and provides a whitelist where calls
+ * from exit are allowed.
  * <p>
  * Additionally it enforces threadgroup security with the following rules:
  * <ul>
@@ -62,21 +62,13 @@ import java.util.Objects;
  *         http://cs.oswego.edu/pipermail/concurrency-interest/2009-August/006508.html</a>
  */
 public class SecureSM extends SecurityManager {
-  private final boolean allowTestExit;
-  
+  private final String[] packagesThatCanExit;
+
   /**
    * Create a new SecurityManager.
    */
-  public SecureSM() {
-    this(false);
-  }
-  
-  /** 
-   * Expert: for testing only.
-   * @param allowTestExit {@code true} if test-runners should be allowed to exit the VM.
-   */
-  public SecureSM(boolean allowTestExit) {
-    this.allowTestExit = allowTestExit;
+  public SecureSM(String[] packagesThatCanExit) {
+    this.packagesThatCanExit = packagesThatCanExit;
   }
   
   // java.security.debug support
@@ -170,28 +162,13 @@ public class SecureSM extends SecurityManager {
   // exit permission logic
   @Override
   public void checkExit(int status) {
-    if (allowTestExit) {
-      checkTestExit(status);
-    } else {
-      throw new SecurityException("exit(" + status + ") not allowed by system policy");
-    }
+    checkExit(status, packagesThatCanExit);
   }
-
-  static final String TEST_RUNNER_PACKAGES[] = {
-    // surefire test runner
-    "org.apache.maven.surefire.booter.",
-    // junit4 test runner
-    "com.carrotsearch.ant.tasks.junit4.",
-    // eclipse test runner
-    "org.eclipse.jdt.internal.junit.runner.",
-    // intellij test runner
-    "com.intellij.rt.execution.junit."
-  };
   
   /**
    * The "Uwe Schindler" algorithm.
    */
-  protected void checkTestExit(final int status) {
+  protected void checkExit(final int status, final String[] packagesThatCanExit) {
     AccessController.doPrivileged(new PrivilegedAction<Void>() {
       @Override
       public Void run() {
@@ -209,8 +186,11 @@ public class SecureSM extends SecurityManager {
           }
           
           if (exitMethodHit != null) {
-            for (String testPackage : TEST_RUNNER_PACKAGES) {
-              if (className.startsWith(testPackage)) {
+            if (packagesThatCanExit == null) {
+              break;
+            }
+            for (String packageThatCanExit : packagesThatCanExit) {
+              if (className.startsWith(packageThatCanExit)) {
                 // this exit point is allowed, we return normally from closure:
                 return null;
               }
@@ -224,7 +204,7 @@ public class SecureSM extends SecurityManager {
           // should never happen, only if JVM hides stack trace - replace by generic:
           exitMethodHit = "JVM exit method";
         }
-        throw new SecurityException(exitMethodHit + " calls are not allowed because they terminate the test runner's JVM.");
+        throw new SecurityException(exitMethodHit + " calls are not allowed");
       }
     });
     
