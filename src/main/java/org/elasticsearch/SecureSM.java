@@ -22,9 +22,6 @@ package org.elasticsearch;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 /**
