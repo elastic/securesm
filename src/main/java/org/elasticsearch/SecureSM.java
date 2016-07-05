@@ -162,13 +162,13 @@ public class SecureSM extends SecurityManager {
   // exit permission logic
   @Override
   public void checkExit(int status) {
-    checkExit(status, packagesThatCanExit);
+    innerCheckExit(status);
   }
   
   /**
    * The "Uwe Schindler" algorithm.
    */
-  protected void checkExit(final int status, final String[] packagesThatCanExit) {
+  protected void innerCheckExit(final int status) {
     AccessController.doPrivileged(new PrivilegedAction<Void>() {
       @Override
       public Void run() {
