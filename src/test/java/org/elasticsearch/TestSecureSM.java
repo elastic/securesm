@@ -19,14 +19,13 @@ package org.elasticsearch;
  * under the License.
  */
 
+import junit.framework.TestCase;
+import org.junit.Test;
+
 import java.security.Permission;
 import java.security.Policy;
 import java.security.ProtectionDomain;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.junit.Test;
-
-import junit.framework.TestCase;
 
 /** Simple tests for SecureSM */
 public class TestSecureSM extends TestCase {
@@ -46,16 +45,7 @@ public class TestSecureSM extends TestCase {
         return true;
       }
     });
-    System.setSecurityManager(new SecureSM(new String[]{
-            // surefire test runner
-            "org.apache.maven.surefire.booter.",
-            // junit4 test runner
-            "com.carrotsearch.ant.tasks.junit4.",
-            // eclipse test runner
-            "org.eclipse.jdt.internal.junit.runner.",
-            // intellij test runner
-            "com.intellij.rt.execution.junit."
-    }));
+    System.setSecurityManager(SecureSM.createTestSecureSM());
   }
   
   @Test

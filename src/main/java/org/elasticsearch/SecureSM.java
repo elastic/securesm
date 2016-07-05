@@ -22,6 +22,9 @@ package org.elasticsearch;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -62,15 +65,51 @@ import java.util.Objects;
  *         http://cs.oswego.edu/pipermail/concurrency-interest/2009-August/006508.html</a>
  */
 public class SecureSM extends SecurityManager {
+
   private final String[] packagesThatCanExit;
 
   /**
-   * Create a new SecurityManager.
+   * Creates a new security manager where no packages can exit nor halt the virtual machine.
    */
-  public SecureSM(String[] packagesThatCanExit) {
+  public SecureSM() {
+    this(new String[0]);
+  }
+
+  /**
+   * Creates a new security manager with the specified list of packages being the only packages
+   * that can exit or halt the virtual machine.
+   *
+   * @param packagesThatCanExit the list of packages that can exit or halt the virtual machine
+   */
+  public SecureSM(final String[] packagesThatCanExit) {
     this.packagesThatCanExit = packagesThatCanExit;
   }
-  
+
+  /**
+   * Creates a new security manager with a standard set of test packages being the only packages
+   * that can exit or halt the virtual machine. The packages that can exit are
+   *  <li><code>org.apache.maven.surefire.booter.</code></li>
+   *  <li><code>com.carrotsearch.ant.tasks.junit4.</code></li>
+   *  <li><code>org.eclipse.internal.junit.runner.</code></li>
+   *  <li><code>com.intellij.rt.execution.junit.</code></li>
+   *
+   * @return an instance of SecureSM where test packages can halt or exit the virtual machine
+     */
+  public static SecureSM createTestSecureSM() {
+    return new SecureSM(TEST_RUNNER_PACKAGES);
+  }
+
+  private static final String[] TEST_RUNNER_PACKAGES = new String[] {
+    // surefire test runner
+    "org.apache.maven.surefire.booter.",
+    // junit4 test runner
+    "com.carrotsearch.ant.tasks.junit4.",
+    // eclipse test runner
+    "org.eclipse.jdt.internal.junit.runner.",
+    // intellij test runner
+    "com.intellij.rt.execution.junit."
+  };
+
   // java.security.debug support
   private static final boolean DEBUG = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
     @Override
@@ -211,4 +250,5 @@ public class SecureSM extends SecurityManager {
     // we passed the stack check, delegate to super, so default policy can still deny permission:
     super.checkExit(status);
   }
+
 }
