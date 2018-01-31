@@ -22,6 +22,7 @@ package org.elasticsearch;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
+import java.security.Security;
 import java.util.Objects;
 
 /**
@@ -62,6 +63,15 @@ import java.util.Objects;
  *         http://cs.oswego.edu/pipermail/concurrency-interest/2009-August/006508.html</a>
  */
 public class SecureSM extends SecurityManager {
+
+  /*
+   * JVM behavior is to cache forever when a security manager is installed, set default values for TCP load-balancing support.
+   * Must be set before first TCP connection!
+   */
+  static {
+    Security.setProperty("networkaddress.cache.ttl", "60");
+    Security.setProperty("networkaddress.cache.negative.ttl", "10");
+  }
 
   private final String[] classesThatCanExit;
 
